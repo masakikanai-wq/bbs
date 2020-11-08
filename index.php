@@ -1,82 +1,68 @@
 <?php 
 
-    // 定数の定義・定数は変数と見分けがつくように大文字で指定する習慣がある
-    define( 'FILENAME', './message.txt');
-
-    // タイムゾーンの指定
+    // タイムゾーン設定
     date_default_timezone_set('Asia/Tokyo');
 
-    // 変数の初期化
-    $now_time = null;
-    $data = null;
-    $file_handle = null;
-    $split_data = null;
-    // $message = array();のような形で連想配列を定義できる
-    $message = array();
-    $message_array = array();
     $error_message = array();
 
-    if(!empty($_POST['btn_submit'])){
+    // 修正のための追記部分
+    $view_name = ''; //タイトルの変数
+    $message = ''; //記事の内容
+    $now_date = ''; //現在時刻取得用
 
-        $view_name = $_POST['view_name'];
-        $message = $_POST['message'];
+    $FILE = 'message.txt'; //保存ファイル名
+    $id = uniqid(); //ユニークなIDを自動生成
+    $DATA = []; //一回分の投稿の情報を入れる
+    $BOARD = []; //全ての投稿の情報を入れる
+
+    // $FILEというファイルが存在しているときにファイルを読み込む
+    if (file_exists($FILE)){
+        $BOARD = json_decode(file_get_contents($FILE));
+    }
+
+    if (!empty($_POST['btn_submit'])){
+
+        if(!empty($_POST['view_name']) && !empty($_POST['message'])){
+            // 送信されたテキストを代入する
+            $view_name = $_POST['view_name'];
+            $message = $_POST['message'];
+
+            // 現在時刻の取得方法を後で調べる
+            // $now_date = date("Y-m-d H:i:s");
+
+            // 新規データ
+            $DATA = [$id, $view_name, $message];
+            $BOARD[] = $DATA;
+
+            // 全体配列をファイルに保存する
+            // file_put_contentsは fopen()→fwrite()→fclose を実行するのと同じ
+            // json_encodeは指定した値をJSON形式に変換した文字列を返す
+            // JSON_UNESCAPED_UNICODE を入れることで日本語でjsonを返してくれる
+            // これがないと文字コードで日本語部分が表示されてしまう
+            //ファイル保存するときのテキストメッセージが改行できないので確認する
+            file_put_contents($FILE, json_encode($BOARD, JSON_UNESCAPED_UNICODE));
+        }
 
         // ユーザーからの値をHTMLに出力するときにセキュリティ目的で使用する
         $view_name = htmlspecialchars($view_name, ENT_QUOTES);
         $message = htmlspecialchars($message, ENT_QUOTES);
 
+        // エラーメッセージ取得
         // タイトルのチェック
-        if(empty($_POST['view_name'])){
+        if (empty($_POST['view_name'])){
             $error_message[] = 'タイトルは必須です。';
         }
 
         // タイトル文字数チェック
-        if((mb_strlen($_POST['view_name'])) > 30){
+        if ((mb_strlen($_POST['view_name'])) > 30){
             $error_message[] = 'タイトルは30文字以下にしてください。';
         }
 
         // コメントのチェック
-        if(empty($_POST['message'])){
+        if (empty($_POST['message'])){
             $error_message[] = 'メッセージは必須です。';
         }
-
-        // fopen関数を使用して指定したファイルを開く
-        if($file_handle = fopen( FILENAME, "a")){
-
-            if(empty($error_message)){
-
-            $now_date = date("Y-m-d H:i:s");
-            // 書き込み日時を取得
-
-            $data = "'".$_POST['view_name']."', '".$_POST['message']."', '".$now_date."'\n";
-            // 書き込むデータの作成
-
-            fwrite($file_handle, $data);
-            // データの書き込み
-
-            fclose($file_handle);
-            // fclose関数はファイルを閉じるための関数
-            // fopenとセットで使用する、ファイルポインターリソースを渡して閉じるファイルを指定する
-            }
-        }
     }
-
-    if($file_handle = fopen(FILENAME, 'r')){
-        while($data = fgets($file_handle)){
-
-            $split_data = preg_split('/\'/', $data);
-
-            $message = array(
-                'view_name' => $split_data[1],
-                'message' => $split_data[3],
-                'post_date' => $split_data[5]
-            );
-            array_unshift($message_array, $message);
-        }
-        // ファイルを閉じる
-        fclose($file_handle);
-    }
-
 ?>
 
 <!DOCTYPE html>
@@ -93,7 +79,7 @@
         <div class="container">
             <div class="bbs">
                 <!-- エラーメッセージ表示 -->
-                <?php if(!empty($error_message)):?>
+                <?php if (!empty($error_message)):?>
                     <ul>
                         <?php foreach($error_message as $value): ?>
                             <li><?php echo $value; ?></li>
@@ -104,11 +90,11 @@
                 <form action="" method="post" onsubmit="return submitChk()">
                     <div>
                         <label for="view_name">タイトル</label>
-                        <input id="view_name" type="text" name="view_name" value="<?php if(isset($view_name)){echo $view_name;} ?>">
+                        <input id="view_name" type="text" name="view_name" value="<?php if (isset($view_name)){echo $view_name;} ?>">
                     </div>
                     <div>
                         <label for="message">一言コメント</label>
-                        <textarea name="message" id="message" cols="30" rows="10"><?php if(isset($message)){echo $_POST['message'];} ?></textarea>
+                        <textarea name="message" id="message" cols="30" rows="10"></textarea>
                     </div>
                     <input class="btn" type="submit" name="btn_submit" value="送信">
                 </form>
@@ -117,17 +103,16 @@
     </section>
     <section id="message-wrapper">
         <div class="container">
-            <?php if(!empty($message_array)): ?>
-                <?php foreach($message_array as $value): ?>
-                    <article>
-                        <div class="info">
-                            <h2><?php echo $value['view_name']; ?></h2>
-                            <time><?php  echo date('Y年m月d日 H:i', strtotime($value['post_date'])); ?></time>
-                        </div>
-                        <p><?php echo $value['message']; ?></p>
-                    </article>
-                <?php endforeach; ?>
-            <?php endif ?>
+            <?php foreach((array)$BOARD as $value): ?>
+                <article>
+                    <div class="info">
+                        <h2><?php echo $value[1]; ?></h2>
+                        <!-- 時刻の表示がエラーになってしまうので後で修正する -->
+                        <!-- <time><?php  echo date('Y年m月d日 H:i', strtotime($value[3])); ?></time> -->
+                    </div>
+                    <p><?php echo $value[2]; ?></p>
+                </article>
+            <?php endforeach; ?>
         </div>
     </section>
 </body>

@@ -111,6 +111,7 @@
                         <!-- <time><?php  echo date('Y年m月d日 H:i', strtotime($value[3])); ?></time> -->
                     </div>
                     <p><?php echo $value[2]; ?></p>
+                    <p class="routing"><a href="article.php?id=<?php echo $value[0] ?>">記事全文・コメントを見る</a></p>
                 </article>
             <?php endforeach; ?>
         </div>

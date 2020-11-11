@@ -80,24 +80,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BBS</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/styles.css">
     <script src="script.js"></script>
 </head>
 <body>
+    <nav class="main-header">
+        <div class="nav-bar">
+            <a href="/" class="nav-link">Laravel News</a>
+        </div>
+    </nav>
     <!-- 記事のタイトルと詳細表示部分 -->
     <section id="bbs-wrapper">
         <div class="container">
             <div class="bbs">
                 <div>
-                    <label for="view_name">タイトル</label>
-                    <p><?php if (isset($page_data)){echo $page_data[1];} ?></p>
+                    <h3><?php if (isset($page_data)){echo $page_data[1];} ?></h3>
                 </div>
                 <div>
-                    <label for="message">一言コメント</label>
                     <p><?php if (isset($page_data)){echo $page_data[2];} ?></p>
                 </div>
                 <p class="home"><a href="/php_bbs">一覧に戻る</a></p>
             </div>
+        </div>
+    </section>
+    <section>
+        <div class="container article-hr">
+            <hr>
         </div>
     </section>
     <!-- コメント投稿フォーム -->
@@ -106,10 +114,12 @@
             <div class="comment-submit">
                 <form action="" method="post">
                     <div>
-                        <label for="comment">コメント</label>
+                        <label for="comment">この投稿に関するコメント</label>
                         <textarea name="comment" id="comment" cols="30" rows="10"></textarea>
                     </div>
-                    <input class="btn" type="submit" name="btn_submit" value="送信">
+                    <div class="input-submit">
+                        <input class="btn" type="submit" name="btn_submit" value="送信">
+                    </div>
                 </form>
             </div>
         </div>
@@ -118,12 +128,15 @@
     <section id="comment-display-wrapper">
         <div class="container">
             <div class="comment-display">
+                <h3>コメント一覧</h3>
+                <hr>
                 <?php foreach((array)$COMMENT_BOARD as $value): ?>
                     <article>
                         <div>
                             <p><?php echo $value[2]; ?></p>
                         </div>
                     </article>
+                    <hr>
                 <?php endforeach; ?>
             </div>
         </div>

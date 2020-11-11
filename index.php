@@ -71,13 +71,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BBS</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/styles.css">
     <script src="script.js"></script>
 </head>
 <body>
+    <nav class="main-header">
+        <div class="nav-bar">
+            <a href="/" class="nav-link">Laravel News</a>
+        </div>
+    </nav>
     <section id="bbs-wrapper">
         <div class="container">
             <div class="bbs">
+                <h2 class="content-header">さぁ、最新のニュースをシェアしましょう！</h2>
                 <!-- エラーメッセージ表示 -->
                 <?php if (!empty($error_message)):?>
                     <ul>
@@ -93,12 +99,19 @@
                         <input id="view_name" type="text" name="view_name" value="<?php if (isset($view_name)){echo $view_name;} ?>">
                     </div>
                     <div>
-                        <label for="message">一言コメント</label>
+                        <label for="message">記事</label>
                         <textarea name="message" id="message" cols="30" rows="10"></textarea>
                     </div>
-                    <input class="btn" type="submit" name="btn_submit" value="送信">
+                    <div class="input-submit">
+                        <input class="btn" type="submit" name="btn_submit" value="送信">
+                    </div>
                 </form>
             </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <hr>
         </div>
     </section>
     <section id="message-wrapper">
@@ -113,6 +126,7 @@
                     <p><?php echo $value[2]; ?></p>
                     <p class="routing"><a href="article.php?id=<?php echo $value[0] ?>">記事全文・コメントを見る</a></p>
                 </article>
+                <hr>
             <?php endforeach; ?>
         </div>
     </section>

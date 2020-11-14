@@ -7,20 +7,19 @@
     $unique_id = uniqid();
 
     $id = $_GET['id'];
-    $FILE = 'message.txt'; //保存ファイル名
+    $FILE = 'message.txt';  //保存ファイル名
     $file = json_decode(file_get_contents($FILE));
-    $page_data = [];
+    $page_data = [];        //表示する配列
 
     //記事へのコメント関連
     $COMMENT_DATA = 'comment.txt';
     $comment_data = json_decode(file_get_contents($COMMENT_DATA));
     $comment_board = [];    // 全体配列
-    $comment = '';          //コメント初期化
+    $comment = '';          // コメント初期化
     $DATA = [];             // 追加するデータ
     $COMMENT_BOARD = [];    // 表示する配列
 
     // エラーメッセージ
-    // 未使用なので削除予定
     $error_message = [];
 
     // ネストした配列のlist()による展開（配列の配列の反復処理）
@@ -41,6 +40,7 @@
 
     // $COMMENT_DATAというファイルが存在しているときにファイルを読み込む
     // $COMMENT_DATAから$comment_boardに全体の配列を入れている
+    // この処理必要ない？
     if (file_exists($COMMENT_DATA)){
         $comment_board = json_decode(file_get_contents($COMMENT_DATA));
     }
@@ -71,6 +71,36 @@
             header("Location: article.php?id=$id");
             exit;
         }
+
+        // コメント削除機能
+        // 削除ボタンが押されたとき
+        if (!empty($_POST['del'])){
+
+            // $delに代入する必要があるのか確認すること
+            $del = $_POST['del'];
+
+            // 新しい全体配列を作る
+            $new_comment_board = [];
+
+            foreach ((array)$comment_data as $index => list($key, $comment_id)) {
+                // 下記の記述は必要なさそうなので削除
+                // $NEW_COMMENT_BOARD[] = $comment_data[$index];
+                if ($key !== $del){
+                    $new_comment_board[] = $comment_data[$index];
+                }
+            }
+
+            file_put_contents($COMMENT_DATA, json_encode($new_comment_board, JSON_UNESCAPED_UNICODE));
+
+            // 今いるページにリダイレクト
+            header("Location: article.php?id=$id");
+            exit;
+        }
+
+        //  エラーメッセージの表示
+        if (empty($_POST['comment'])){
+            $error_message[] = 'コメントは必須です。';
+        }
     }
 ?>
 
@@ -86,7 +116,7 @@
 <body>
     <nav class="main-header">
         <div class="nav-bar">
-            <a href="/" class="nav-link">Laravel News</a>
+            <a href="/php_bbs" class="nav-link">Laravel News</a>
         </div>
     </nav>
     <!-- 記事のタイトルと詳細表示部分 -->
@@ -111,6 +141,14 @@
     <!-- コメント投稿フォーム -->
     <section id="comment-submit-wrapper">
         <div class="container">
+            <!-- エラーメッセージの表示 -->
+            <?php if (!empty($error_message)):?>
+                <ul>
+                    <?php foreach($error_message as $value): ?>
+                        <li><?php echo $value; ?></li>
+                    <?php endforeach ?>
+                </ul>
+            <?php endif; ?>
             <div class="comment-submit">
                 <form action="" method="post">
                     <div>
@@ -131,11 +169,18 @@
                 <h3>コメント一覧</h3>
                 <hr>
                 <?php foreach((array)$COMMENT_BOARD as $value): ?>
-                    <article>
-                        <div>
-                            <p><?php echo $value[2]; ?></p>
-                        </div>
-                    </article>
+                    <form class="comments" action="" method="post">
+                        <article>
+                            <div>
+                                <p><?php echo $value[2]; ?></p>
+                            </div>
+                            <!-- コメント削除機能 -->
+                            <div class="delete-submit">
+                                <input type="hidden" name="del" value="<?php echo $value[0]; ?>">
+                                <input class="btn-submit-delete" type="submit" name="btn_submit" value="削除" onclick="return confirm('コメントを削除しますか？')">
+                            </div>
+                        </article>
+                    </form>
                     <hr>
                 <?php endforeach; ?>
             </div>

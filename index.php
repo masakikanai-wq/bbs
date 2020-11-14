@@ -41,23 +41,27 @@
             // これがないと文字コードで日本語部分が表示されてしまう
             //ファイル保存するときのテキストメッセージが改行できないので確認する
             file_put_contents($FILE, json_encode($BOARD, JSON_UNESCAPED_UNICODE));
+
+            header("Location: index.php");
+            exit;
         }
 
         // ユーザーからの値をHTMLに出力するときにセキュリティ目的で使用する
         $view_name = htmlspecialchars($view_name, ENT_QUOTES);
         $message = htmlspecialchars($message, ENT_QUOTES);
 
+        
         // エラーメッセージ取得
         // タイトルのチェック
         if (empty($_POST['view_name'])){
             $error_message[] = 'タイトルは必須です。';
         }
-
+        
         // タイトル文字数チェック
         if ((mb_strlen($_POST['view_name'])) > 30){
             $error_message[] = 'タイトルは30文字以下にしてください。';
         }
-
+        
         // コメントのチェック
         if (empty($_POST['message'])){
             $error_message[] = 'メッセージは必須です。';
@@ -77,7 +81,7 @@
 <body>
     <nav class="main-header">
         <div class="nav-bar">
-            <a href="/" class="nav-link">Laravel News</a>
+            <a href="/php_bbs" class="nav-link">Laravel News</a>
         </div>
     </nav>
     <section id="bbs-wrapper">

@@ -18,32 +18,88 @@
     $comment = '';          // コメント初期化
     $DATA = [];             // 追加するデータ
     $COMMENT_BOARD = [];    // 表示する配列
+    $BOARD = [];            // 表示する配列
 
     // エラーメッセージ
     $error_message = [];
 
+    // phpMyAdminとの接続
+    $user = 'root';
+    $password = 'root';
+    $db = 'laravel_news';
+    $host = 'localhost';
+    $port = 3306;
+
+    $link = mysqli_init();
+    $success = mysqli_real_connect(
+        $link,
+        $host,
+        $user,
+        $password,
+        $db,
+        $port
+    );
+
+    // MySQLからデータを取得するための記述
+    // 手続き型の記述
+    // $query = "SELECT * FROM `data`";
+    // if ($success){
+    //     $result = mysqli_query($link, $query);
+    //     while ($row = mysqli_fetch_array($result)){
+    //         $BOARD[] = [$row['id'], $row['title'], $row['message']];
+    //     }
+    // }
+    
+    // MySQLからデータを取得するための記述
+    // 手続き型の記述
+    // $query = "SELECT * FROM `comment`";
+    // if ($success){
+    //     $result = mysqli_query($link, $query);
+    //     while ($row = mysqli_fetch_array($result)){
+    //         $COOMENT_BOARD[] = [$row['id'], $row['article_id'], $row['comment']];
+    //     }
+    // }
+
+    // オブジェクト型の記述
+    // 記事タイトルと詳細の取得
+    // WHERE id= '" . $id . "' の渡し方の記述が合っているか要確認
+    $db = new PDO('mysql:dbname=laravel_news;host=localhost;charset=utf8','root','root');
+    $articles = $db->prepare("SELECT * FROM `data` WHERE id= '" . $id . "' ");
+    $articles->execute(array($_REQUEST['id']));
+    $article = $articles->fetch();
+
+    // オブジェクト型の記述
+    // コメントの取得
+    // データベースオブジェクトのインスタンスを作成する記述を複数回記述する必要があるか要確認
+    $db = new PDO('mysql:dbname=laravel_news;host=localhost;charset=utf8','root','root');
+    $comments = $db->query("SELECT * FROM `comment` WHERE article_id= '" . $id . "' ");
+    $comment = $comments->fetch();
+
+    // .txtパターンのときに必要
     // ネストした配列のlist()による展開（配列の配列の反復処理）
     // 公式のPHPドキュメントを参照
-    foreach ($file as $index => list($key, $comment_id)){
-        if ($key == $id){
-            $page_data = $file[$index];
-        }
-    }
+    // foreach ($file as $index => list($key, $comment_id)){
+    //     if ($key == $id){
+    //         $page_data = $file[$index];
+    //     }
+    // }
 
+    // .txtパターンのときに必要
     // 記事ごとのコメントを取り出す処理
-    foreach ((array)$comment_data as $index => list($key, $comment_id)){
-        $comment_board[] = $comment_data[$index];
-        if ($comment_id == $id){
-            $COMMENT_BOARD[] = $comment_data[$index];
-        }
-    }
+    // foreach ((array)$comment_data as $index => list($key, $comment_id)){
+    //     $comment_board[] = $comment_data[$index];
+    //     if ($comment_id == $id){
+    //         $COMMENT_BOARD[] = $comment_data[$index];
+    //     }
+    // }
 
+    // .txtパターンのときに必要
     // $COMMENT_DATAというファイルが存在しているときにファイルを読み込む
     // $COMMENT_DATAから$comment_boardに全体の配列を入れている
     // この処理必要ない？
-    if (file_exists($COMMENT_DATA)){
-        $comment_board = json_decode(file_get_contents($COMMENT_DATA));
-    }
+    // if (file_exists($COMMENT_DATA)){
+    //     $comment_board = json_decode(file_get_contents($COMMENT_DATA));
+    // }
 
     // コメント送信ボタンが押されてからの処理
     if (!empty($_POST['btn_submit'])){
@@ -53,18 +109,28 @@
             // 送信されたテキストを代入する
             $comment = $_POST['comment'];
 
+            // .txtパターンのときに必要
             // 新規コメントデータを全体配列の挿入
             // $idを2番目に配置するのがポイント？
             // $unique_id → コメントごとのid
             // $id → 記事ごとのid
-            $DATA = [$unique_id, $id, $comment];
-            $comment_board[] = $DATA;
+            // $DATA = [$unique_id, $id, $comment];
+            // $comment_board[] = $DATA;
+
+            // データ追加のためのQuery
+            // $insert_query = "INSERT INTO `comment`(`id`, `article_id`, `comment`) VALUES ('{$unique_id}', '{$id}', '{$comment}')"; 
+            // mysqli_query($link, $insert_query);
+
+            // データベースオブジェクトのインスタンスを作成する記述を複数回記述する必要があるか要確認
+            $db = new PDO('mysql:dbname=laravel_news;host=localhost;charset=utf8','root','root');
+            $db->exec('INSERT INTO comment SET id="' . $unique_id . '", article_id="' . $id . '", comment="' . $comment . '"');
 
             // この$idを取得する記述は必要ないかも
-            $id = $_GET['id'];
+            // $id = $_GET['id'];
 
+             // .txtパターンのときに必要
             // 全体配列をファイルに保存する
-            file_put_contents($COMMENT_DATA, json_encode($comment_board, JSON_UNESCAPED_UNICODE));
+            // file_put_contents($COMMENT_DATA, json_encode($comment_board, JSON_UNESCAPED_UNICODE));
 
             // 現在表示している記事詳細ページへリダイレクト
             // リダイレクトしないとリアルタイムでコメントが反映されなかった
@@ -114,6 +180,14 @@
     <script src="script.js"></script>
 </head>
 <body>
+    <?php 
+        try {
+            $db = new PDO('mysql:dbname=laravel_news;host=localhost;charset=utf8','root','root');
+            echo 'DB Connection Success!';
+        } catch(PDOException $e) {
+            echo 'DB接続エラー:' . $e->getMessage();
+        };
+    ?>
     <nav class="main-header">
         <div class="nav-bar">
             <a href="/php_bbs" class="nav-link">Laravel News</a>
@@ -124,10 +198,10 @@
         <div class="container">
             <div class="bbs">
                 <div>
-                    <h3><?php if (isset($page_data)){echo $page_data[1];} ?></h3>
+                    <h3><?php echo $article[1]; ?></h3>
                 </div>
                 <div>
-                    <p><?php if (isset($page_data)){echo $page_data[2];} ?></p>
+                    <p><?php echo $article[2]; ?></p>
                 </div>
                 <p class="home"><a href="/php_bbs">一覧に戻る</a></p>
             </div>
@@ -168,21 +242,29 @@
             <div class="comment-display">
                 <h3>コメント一覧</h3>
                 <hr>
-                <?php foreach((array)$COMMENT_BOARD as $value): ?>
+                <?php
+                    $db = new PDO('mysql:dbname=laravel_news;host=localhost;charset=utf8','root','root');
+                    $comments = $db->query("SELECT * FROM `comment` WHERE article_id= '" . $id . "' ");
+                ?>
+                <?php while ($comment = $comments->fetch()): ?>
+                    <p><?php print($comment['comment']); ?></p>
+                    <hr>
+                <?php endwhile; ?>
+                <!-- <?php foreach((array)$comment as $value): ?>
                     <form class="comments" action="" method="post">
                         <article>
                             <div>
                                 <p><?php echo $value[2]; ?></p>
-                            </div>
+                            </div> -->
                             <!-- コメント削除機能 -->
-                            <div class="delete-submit">
+                            <!-- <div class="delete-submit">
                                 <input type="hidden" name="del" value="<?php echo $value[0]; ?>">
                                 <input class="btn-submit-delete" type="submit" name="btn_submit" value="削除" onclick="return confirm('コメントを削除しますか？')">
                             </div>
                         </article>
                     </form>
                     <hr>
-                <?php endforeach; ?>
+                <?php endforeach; ?> -->
             </div>
         </div>
     </section>
